@@ -99,12 +99,12 @@ This project supports two methods for AI-based information extraction from job p
 | Aspect              | **LLAMA 3.1 8B (Local, via Ollama)**                            | **Mistral-Medium (via API)**                   |
 |---------------------|----------------------------------------------------------------|------------------------------------------------|
 | **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **4.7 GB**, and it’s a 8B parameter model which should run fine on a dedicated graphics card with 8GB of VRAM. | No special hardware required; inference done on external servers. |
-| **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (should be sufficient). |
+| **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (Extracting data for 280 applications used around 400,000 tokens). |
 | **Performance**      | Local inference may have **lower latency** but requires proper GPU resources to handle the model effectively. | API model is larger and may offer **better performance** at the cost of potential network latency. |
 
 For local use, ensure your GPU has sufficient VRAM for the model size. The free API provides ample token capacity for typical workloads.
 
-### Using Ollama
+### Using Ollama - currenlty not working on Mac will fix this soon
 Ollama allows for local AI processing on your machine. Follow these steps to set it up:
 1. Install [Ollama](https://ollama.com) by following their instructions for your operating system.
 2. Start an Ollama server (detailed instructions here)
@@ -152,7 +152,7 @@ By following these steps, you can easily install, serve, and stop the `llama3.1`
 
 
 ### Using Mistral API  - Model used: mistral-medium
-The Mistral API provides cloud-based AI processing. To use it:
+The Mistral API provides cloud-based AI processing. There is a free API. To use it:
 1. Sign up for an API key at the [Mistral website](https://mistral.com/api) (if needed).
 2. During runtime, when prompted:
    - Select `n` (no) for Ollama.
