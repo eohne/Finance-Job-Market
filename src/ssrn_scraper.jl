@@ -20,6 +20,13 @@ function get_link(x::AbstractString)
     return replace(m, r"(<a href=\\\"|.>$)" => "")
 end;
 
+function clean_ssrn_html(raw_html)
+    temp = split(raw_html,"\n")
+    start_idx = findfirst(x->occursin(r"\<div class=\"maincontent \"\>",x), temp)
+    end_idx = findfirst(x->occursin(r"\</article\>",x), temp)
+    return join(temp[start_idx:end_idx],"\n")
+end
+
 function get_application_procedure(link)
     resp2 = HTTP.request("GET", link, retry=true, retry_delays=ExponentialBackOff(n=10, first_delay=0.15)).body |> String
     html_text = resp2
@@ -36,7 +43,7 @@ function get_application_procedure(link)
     else
         idx = idx[1] + 1
     end
-    return text(parsehtml(resp2[idx]).root), dates, html_text
+    return text(parsehtml(resp2[idx]).root), dates, clean_ssrn_html(html_text)
 end;
 function ssrn_jobs()
     resp = HTTP.get(SSRN)

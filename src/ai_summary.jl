@@ -2,7 +2,7 @@ const PT = PromptingTools;
 
 function clean_ssrn_html(raw_html)
     temp = split(raw_html,"\n")
-    start_idx = findfirst(x->occursin(r"\</header1\>",x), temp)
+    start_idx = findfirst(x->occursin(r"\<div class=\"maincontent \"\>",x), temp)
     end_idx = findfirst(x->occursin(r"\</article\>",x), temp)
     return join(temp[start_idx:end_idx],"\n")
 end

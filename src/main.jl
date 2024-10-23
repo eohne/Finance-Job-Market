@@ -27,7 +27,7 @@ mistral_api_key = "api_key"
 if use_ai
     println("Checking if AI packages are installed...")
     install_dep("Suppressor")
-    @suppress_out begin  # Suppresses stdout
+    @suppress_err begin  # Suppresses stdout
         install_dep("PromptingTools");
     end
     include("ai_summary.jl");
@@ -87,9 +87,17 @@ function append_to_csv(new_data::DataFrame, filepath::String)
     return new_data
 end
 
+
 # Retrieve and process SSRN jobs
 println("\nRetrieving SSRN job postings...")
 ssrn_table = ssrn_jobs()
+ssrn_table.Html = clean_ssrn_html.(ssrn_table.Html)
+function get_text_only(str::String)
+    res = parsehtml(str)
+    res = text(res.root)
+    return res
+end
+ssrn_table.Html = get_text_only.(ssrn_table.Html)
 ssrn_table = append_to_csv(ssrn_table, ssrn_path)
 
 # Retrieve and process AFA jobs
