@@ -2,6 +2,7 @@
 
 This package scrapes academic job postings from various platforms like SSRN and AFA. Additionally, it provides the option to use AI tools to extract structured information from job postings for easier analysis.
 
+Output CSV Files can be found in the ([Output Folder](https://github.com/eohne/Finance-Job-Market/tree/main/Output))
 
 > **⚠️ Disclaimer**
 >
@@ -10,8 +11,9 @@ This package scrapes academic job postings from various platforms like SSRN and 
 > 1. **Downloading SSRN Files**: Retrieving files from SSRN can be time-consuming because SSRN implements request throttling. To manage this, exponential wait times for retries are incorporated, which can significantly increase the total download time.
 > 
 > 2. **AI Processing Speed**: The processing speed of the AI model varies depending on the environment:
+>    - Using the **mistral-medium API** for processing 200 SSRN and 80 AFA entries took approximately **1 hour**.
 >    - Using the **local llama3.1 model** for processing 200 SSRN and 80 AFA entries took approximately **15 minutes** on a RTX 3070.
->    - While the **local llama3.1 model** can be faster (depends on your hardware), it operates with a less powerful model, impacting overall performance.
+>    - While the **local llama3.1 model** can be faster (depends on your hardware), it is a less powerful model and may lead to worse information extraction.
 >    - Downloading **200 SSRN files** typically takes around **50 minutes**.
 >    - In contrast, downloading **100 AFA files** is nearly instantaneous.
 >
