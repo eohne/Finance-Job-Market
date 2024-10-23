@@ -76,13 +76,18 @@ function ssrn_jobs()
     ap_dates = similar(res.Link)
     ap_raw_html = similar(res.Link)
     # Do this only for companies not yet in the list
-    @showprogress for i in 1:nrow(res)
+     # Setup progress meter
+     
+    p = Progress(nrow(res); desc="Downloading from SSRN:   ", 
+    showspeed=true, barglyphs=BarGlyphs("[=> ]"))
+    for i in 1:nrow(res)
             ap_text[i], ap_dates[i], ap_raw_html[i] = try
             get_application_procedure(res.Link[i])
         catch e
             print("\nError with item: $i\n")
             "","",""
         end
+        next!(p)
     end
     res.Description = ap_text
     res.Deadline = ap_dates
