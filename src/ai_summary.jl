@@ -1,22 +1,16 @@
 const PT = PromptingTools;
 
-function clean_ssrn_html(raw_html)
-    temp = split(raw_html,"\n")
-    start_idx = findfirst(x->occursin(r"\<div class=\"maincontent \"\>",x), temp)
-    end_idx = findfirst(x->occursin(r"\</article\>",x), temp)
-    return join(temp[start_idx:end_idx],"\n")
-end
-
 tpl=PT.create_template("You are a JSON extractor that MUST:
 1. Keep ApplicationID inside the Apply object
 2. Convert ALL document names to standard formats
 3. Return only valid JSON
 4. Never add explanatory text", 
-"""Convert job posting information to this EXACT structure:
+"""
+Convert job posting information to this EXACT structure:
 {
     "Deadline": "yyyy-mm-dd",
     "Apply": {
-        "Link": "url",
+        "Link": "url", \\This should be the link to the online application
         "Email": "email",
         "ApplicationID": "application_id"
     },
@@ -25,7 +19,8 @@ tpl=PT.create_template("You are a JSON extractor that MUST:
     ],
     "OtherDocuments": [
         // non-standard documents
-    ]
+    ],
+    "Summary": "application_summary" \\ Summary max 30 words
 }
 
 EXACT document conversions - if you see text like:
@@ -54,13 +49,16 @@ Output:
         "Teaching Statement",
         "References (3)"
     ],
-    "OtherDocuments": []
+    "OtherDocuments": [],
+    "Summary": "This application is for this position and school. It is non-tenure track."
 }
 
 Parse this text:
 {{text}}"""; load_as="EXTRACTJSONSSRN")
 
-
+nothing_missing_to_space(x::Any) = x;
+nothing_missing_to_space(x::Nothing) = " ";
+nothing_missing_to_space(x::Missing) = " ";
 function extract_ai_summary(raw_html::String; max_retries=5,ollama=true)
     # Create empty DataFrame with correct structure for fallback
     empty_df = DataFrame(
@@ -69,29 +67,31 @@ function extract_ai_summary(raw_html::String; max_retries=5,ollama=true)
         App_email = " ",
         App_JobID = " ",
         Required_Docs = " ",
-        Other_Docs = " "
+        Other_Docs = " ",
+        Summary = " ",
     )
 
     for attempt in 1:max_retries
         try
             # Generate AI response
             if ollama
-                msg = aigenerate(PT.OllamaSchema(), tpl; text=clean_ssrn_html(raw_html), model="mistral-nemo:latest")
+                msg = aigenerate(PT.OllamaSchema(), tpl; text=raw_html, model="llama3.1") #mistral-nemo:latest
             else
                 sleep(1)
-                msg = aigenerate(PT.MistralOpenAISchema(),tpl,text=clean_ssrn_html(raw_html), model="mistral-medium", api_key=mistral_api_key)
+                msg = aigenerate(PT.MistralOpenAISchema(),tpl,text=raw_html, model="mistral-medium", api_key=mistral_api_key)
             end
             # Parse JSON
             json = JSON3.read(msg.content)
             
             # Create DataFrame
             res = DataFrame(
-                Deadline = json.Deadline, 
-                App_link = json.Apply.Link, 
-                App_email = json.Apply.Email,
-                App_JobID = json.Apply.JobID,
+                Deadline = json.Deadline |> nothing_missing_to_space, 
+                App_link = json.Apply.Link |> nothing_missing_to_space, 
+                App_email = json.Apply.Email |> nothing_missing_to_space,
+                App_JobID = json.Apply.ApplicationID |> nothing_missing_to_space,
                 Required_Docs = join(sort(json.RequiredDocuments), ", "),
-                Other_Docs = join(json.OtherDocuments, ", ")
+                Other_Docs = join(json.OtherDocuments, ", "),
+                Summary = json.Summary |> nothing_missing_to_space
             )
             
             return res
@@ -109,8 +109,7 @@ function extract_ai_summary(raw_html::String; max_retries=5,ollama=true)
     return empty_df  # Fallback, should not reach here
 end
 
-
-function process_html_batch(raw_htmls::Vector{String}; max_retries=5, ollama=true)
+function process_html_batch(raw_htmls::Vector{<:AbstractString}; max_retries=5, ollama=true)
     # Initialize empty result DataFrame
     results = DataFrame()
     

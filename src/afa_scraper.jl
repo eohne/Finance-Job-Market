@@ -1,4 +1,5 @@
-
+# set dir location:
+cd(@__DIR__)
 const afa_url = "https://careers.afajof.org/job/";
 get_job_url(id) = afa_url * string(id);
 
@@ -39,12 +40,6 @@ end
 function afa_jobs()
     afa_ids = get_afa_ids()
 
-    title = Vector{String}(undef, size(afa_ids, 1))
-    desc = Vector{String}(undef, size(afa_ids, 1))
-    deadline = Vector{String}(undef, size(afa_ids, 1))
-    org = Vector{String}(undef, size(afa_ids, 1))
-    loc = Vector{String}(undef, size(afa_ids, 1))
-
     # Only load jobs that are not loaded already:
     # Load already complete:
     if isfile(afa_path)
@@ -55,9 +50,19 @@ function afa_jobs()
     end
     afa_ids = afa_ids[idx_keep]
     #
-    for i in 1:size(afa_ids, 1)
-        title[i], desc[i], deadline[i], org[i], loc[i] = get_job(afa_ids[i])
+    if all(.!(idx_keep))
+        return DataFrame()
     end
+        title = Vector{String}(undef, size(afa_ids, 1))
+        desc = Vector{String}(undef, size(afa_ids, 1))
+        deadline = Vector{String}(undef, size(afa_ids, 1))
+        org = Vector{String}(undef, size(afa_ids, 1))
+        loc = Vector{String}(undef, size(afa_ids, 1))
+
+        for i in 1:size(afa_ids, 1)
+            title[i], desc[i], deadline[i], org[i], loc[i] = get_job(afa_ids[i])
+        end
+
 
     AFA_Data = DataFrame(Title=title, Description=desc, Deadline=deadline, Organisation=org, Location=loc)
     transform!(AFA_Data, :Deadline => ByRow(x -> Date(x[begin:10]) - Day(1)), renamecols=false)

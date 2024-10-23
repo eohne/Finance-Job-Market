@@ -1,7 +1,8 @@
+ollama = true; use_ai=true;
 include("install_dep.jl")
 
 # Import necessary packages
-install_dep("HTTP", "Gumbo", "DataFrames","ProgressMeter","CSV","Dates","JSON3");
+install_dep("HTTP", "Gumbo", "DataFrames","ProgressMeter","CSV","Dates","JSON3","Suppressor");
 
 
 # Function to get user input with validation
@@ -26,7 +27,6 @@ ollama = false
 mistral_api_key = "api_key"
 if use_ai
     println("Checking if AI packages are installed...")
-    install_dep("Suppressor")
     @suppress_err begin  # Suppresses stdout
         install_dep("PromptingTools");
     end
@@ -43,22 +43,30 @@ if use_ai
 end
 
 # Set paths for data files
-const output_path = "Output/Jobs.csv"
-const ssrn_path = "Data/ssrn.csv"
-const afa_path = "Data/afa.csv"
-const ssrn_ai_path = "Data/ssrn_ai.csv"
-const afa_ai_path = "Data/afa_ai.csv"
+# const output_path = "Output/Jobs.csv"
+# const ssrn_path = "Data/ssrn.csv"
+# const afa_path = "Data/afa.csv"
+# const ssrn_ai_path = "Data/ssrn_ai.csv"
+# const afa_ai_path = "Data/afa_ai.csv"
+
+const output_path = "../Output/Jobs.csv"
+const ssrn_path = "../Data/ssrn.csv"
+const afa_path = "../Data/afa.csv"
+const ssrn_ai_path = "../Data/ssrn_ai.csv"
+const afa_ai_path = "../Data/afa_ai.csv"
 
 # Include scrapers
 include("ssrn_scraper.jl")
 include("afa_scraper.jl")
+
+
 
 # Modified append_to_csv to include timestamp
 function append_to_csv(new_data::DataFrame, filepath::String)
     if isempty(new_data)
         return new_data
     end
-    
+
     # Add timestamp and initialize flags
     new_data[!, :timestamp] .= Dates.now()
     new_data[!, :old] .= 0
@@ -78,7 +86,7 @@ function append_to_csv(new_data::DataFrame, filepath::String)
             existing_data[!, :timestamp] .= missing
         end
         
-        append!(new_data, existing_data)
+        append!(new_data, existing_data,promote=true)
         CSV.write(filepath, new_data)
     else
         CSV.write(filepath, new_data)
@@ -151,7 +159,7 @@ if use_ai
     # Process new entries
     if !isempty(new_ssrn)
         println("Processing new SSRN entries with AI...")
-        ssrn_ai_new = process_html_batch(new_ssrn.Html; ollama=ollama)
+        ssrn_ai_new = process_html_batch(string.(new_ssrn.Html); ollama=ollama)
         # Add Html column for joining
         ssrn_ai_new[!, :Html] = new_ssrn.Html
         # Update AI flag for processed entries
@@ -167,7 +175,7 @@ if use_ai
     
     if !isempty(new_afa)
         println("Processing new AFA entries with AI...")
-        afa_ai_new = process_html_batch(new_afa.Description; ollama=ollama)
+        afa_ai_new = process_html_batch(string.(new_afa.Description); ollama=ollama)
         # Add Description column for joining
         afa_ai_new[!, :Description] = new_afa.Description
         # Update AI flag for processed entries
@@ -201,7 +209,7 @@ function append_ai_results(new_ai_data::DataFrame, filepath::String)
             existing_ai[!, :Description] = missing
         end
         
-        append!(new_ai_data, existing_ai)  # combine with existing AI results
+        append!(new_ai_data, existing_ai,promote=true)  # combine with existing AI results
         CSV.write(filepath, new_ai_data)
     else
         CSV.write(filepath, new_ai_data)
@@ -211,6 +219,7 @@ function append_ai_results(new_ai_data::DataFrame, filepath::String)
 end
 
 # Modified prepare_final_output to ensure proper joining
+ssrn_df = ssrn_table; afa_df = afa_table; use_ai= true; ssrn_ai = ssrn_ai_results; afa_ai = afa_ai_results
 function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, afa_ai=nothing)
     # Create copies to avoid modifying original data
     ssrn_output = copy(ssrn_df)
@@ -234,7 +243,7 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
             ssrn_output = leftjoin(ssrn_output, ssrn_ai, on=:Html)
             # Only replace Deadline with AI version if AI version exists
             for (i, deadline) in enumerate(ai_deadline)
-                if !ismissing(deadline) && !isnothing(deadline) && !isempty(deadline)
+                if !ismissing(deadline) && !isnothing(deadline) && !isempty(deadline) && !isequal(deadline, " ")
                     ssrn_output[i, :Deadline] = deadline
                 end
             end
@@ -248,17 +257,10 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
             end
             # First rename original Deadline to AFADeadline
             rename!(afa_output, :Deadline => :AFADeadline)
-            # Add new Deadline column initialized with AFADeadline values
-            afa_output[!, :Deadline] = afa_output[!, :AFADeadline]
             # Join AI results
             afa_output = leftjoin(afa_output, afa_ai, on=:Description)
             # Replace Deadline with AI version only where AI version exists
-            for i in 1:nrow(afa_output)
-                if !ismissing(afa_ai_deadline) && !isnothing(afa_ai_deadline) && !isempty(afa_ai_deadline)
-                    afa_output[i, :Deadline] = afa_ai_deadline
-                end
-                # If AI deadline is missing/empty, we already have the AFA deadline as fallback
-            end
+            transform!(afa_output, [:Deadline, :AFADeadline] => ByRow((d,ad) -> ifelse(ismissing(d) | isnothing(d) | isequal(d," "),ad,d)   ) => :Deadline )
         end
     end
     
@@ -281,5 +283,6 @@ final_output = prepare_final_output(
     use_ai ? afa_ai_results : nothing
 )
 # Save final output
+select!(final_output, :Deadline, :AFADeadline,:Organisation,:Title,:Location,:App_link,:App_email,:Required_Docs,:Other_Docs,:Summary,:App_JobID,:source,:Link,:timestamp);
 CSV.write(output_path, final_output)
 println("Done! Output saved to: ", output_path)

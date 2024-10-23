@@ -1,5 +1,5 @@
 const SSRN = "https://www.ssrn.com/index.cfm/en/janda/job-openings/?jobsNet=203";
-const months = ["1", "01", "January", "Jan",
+const _months = ["1", "01", "January", "Jan",
     "2", "02", "February", "Feb", "3", "03", "March", "Mar", "4", "04", "April", "Apr",
     "5", "05", "May", "6", "06", "June", "Jun", "7", "07", "July", "Jul", "8", "08", "August", "Aug", "9", "09", "September", "Sep",
     "10", "October", "Oct", "11", "November", "Nov", "12", "December", "Dec"];
@@ -8,9 +8,9 @@ const d_str = "\\d{1,2}";
 const filler_str = "(\\|/| |, |-)";
 const y_str = "\\d{4}";
 
-const regex = Regex(join(vcat(months .* filler_str .* d_str .* filler_str .* y_str,
-        y_str .* filler_str .* months .* filler_str .* d_str,
-        d_str .* filler_str .* months .* filler_str .* y_str), "|")
+const _regex = Regex(join(vcat(_months .* filler_str .* d_str .* filler_str .* y_str,
+        y_str .* filler_str .* _months .* filler_str .* d_str,
+        d_str .* filler_str .* _months .* filler_str .* y_str), "|")
 );
 function get_text(x::AbstractString)
     return Gumbo.parsehtml(x).root |> text
@@ -20,17 +20,20 @@ function get_link(x::AbstractString)
     return replace(m, r"(<a href=\\\"|.>$)" => "")
 end;
 
-function clean_ssrn_html(raw_html)
+function clean_ssrn_html(raw_html::AbstractString)
     temp = split(raw_html,"\n")
     start_idx = findfirst(x->occursin(r"\<div class=\"maincontent \"\>",x), temp)
     end_idx = findfirst(x->occursin(r"\</article\>",x), temp)
     return join(temp[start_idx:end_idx],"\n")
 end
+function clean_ssrn_html(raw_html::Missing)
+    return ""
+end
 
 function get_application_procedure(link)
     resp2 = HTTP.request("GET", link, retry=true, retry_delays=ExponentialBackOff(n=10, first_delay=0.15)).body |> String
     html_text = resp2
-    dates = [i.match for i in eachmatch(regex, resp2)]
+    dates = [i.match for i in eachmatch(_regex, resp2)]
     if isempty(dates)
         dates = ""
     else

@@ -10,9 +10,9 @@ This package scrapes academic job postings from various platforms like SSRN and 
 > 1. **Downloading SSRN Files**: Retrieving files from SSRN can be time-consuming because SSRN implements request throttling. To manage this, exponential wait times for retries are incorporated, which can significantly increase the total download time.
 > 
 > 2. **AI Processing Speed**: The processing speed of the AI model varies depending on the environment:
->    - Using the **Mistral API** for processing 200 SSRN entries took approximately **1 to 2 hours**.
->    - While the **local Mistral-Nemo model** can be faster (depends on your hardware), it operates with a less powerful model, impacting overall performance.
->    - Downloading **200 SSRN files** typically takes about **1 hour**.
+>    - Using the **local llama3.1 model** for processing 200 SSRN and 80 AFA entries took approximately **15 minutes** on a RTX 3070.
+>    - While the **local llama3.1 model** can be faster (depends on your hardware), it operates with a less powerful model, impacting overall performance.
+>    - Downloading **200 SSRN files** typically takes around **50 minutes**.
 >    - In contrast, downloading **100 AFA files** is nearly instantaneous.
 >
 > Keep these factors in mind when planning your usage of the script, as they may affect the overall efficiency and completion time.
@@ -92,11 +92,11 @@ julia main_script.jl
 ## AI Configuration
 This project supports two methods for AI-based information extraction from job postings. Note that the results may change between runs and that the models can make mistakes.
 
-### Local Mistral-Nemo vs. Mistral-Medium via API: Quick Comparison
+### Local LLAMA 3.1 8B vs. Mistral-Medium via API: Quick Comparison
 
-| Aspect              | **Mistral-Nemo (Local, via Ollama)**                            | **Mistral-Medium (via API)**                   |
+| Aspect              | **LLAMA 3.1 8B (Local, via Ollama)**                            | **Mistral-Medium (via API)**                   |
 |---------------------|----------------------------------------------------------------|------------------------------------------------|
-| **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **7.1 GB**, and it’s a 12B parameter model with a **128k context length**, which typically requires **16GB+ of VRAM**. | No special hardware required; inference done on external servers. |
+| **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **4.7 GB**, and it’s a 8B parameter model with a **128k context length**, which should run fine on a dedicated graphics card with 8GB of VRAM. | No special hardware required; inference done on external servers. |
 | **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (should be sufficient). |
 | **Performance**      | Local inference may have **lower latency** but requires proper GPU resources to handle the model effectively. | API model is larger and may offer **better performance** at the cost of potential network latency. |
 
@@ -109,26 +109,26 @@ Ollama allows for local AI processing on your machine. Follow these steps to set
 3. During runtime, when prompted:
    - Select `y` (yes) to use Ollama.
 
-#### Details: Installing and Serving the **mistral-nemo** Model for Ollama
+#### Details: Installing and Serving the **llama3.1** Model for Ollama
 
-To install and serve the `mistral-nemo` model for use with Ollama, follow these steps based on your operating system:
+To install and serve the `llama3.1` model for use with Ollama, follow these steps based on your operating system:
 
 ##### Steps for All Operating Systems:
 1. **Open the command line** on your machine:
    - **Windows**: Use `Command Prompt` or `PowerShell`.
    - **macOS or Linux**: Use `Terminal`.
 
-2. **Install the `mistral-nemo` model** by running the following command:
+2. **Install the `llama3.1` model** by running the following command:
    ```bash
-   ollama pull mistral-nemo
+   ollama pull llama3.1
    ```
-   This command will download the `mistral-nemo` model to your local machine.
+   This command will download the `llama3.1` model to your local machine.
 
 3. After the model is installed, you can **serve the model locally** by running:
    ```bash
    ollama serve
    ```
-   This command will start the Ollama service, making the `mistral-nemo` model available for use.
+   This command will start the Ollama service, making the `llama3.1` model available for use.
 
 
 ##### Ending the Ollama Service:
@@ -146,7 +146,7 @@ To install and serve the `mistral-nemo` model for use with Ollama, follow these 
      pkill ollama
      ```
 
-By following these steps, you can easily install, serve, and stop the `mistral-nemo` model using Ollama on any operating system.
+By following these steps, you can easily install, serve, and stop the `llama3.1` model using Ollama on any operating system.
 
 
 ### Using Mistral API  - Model used: mistral-medium
