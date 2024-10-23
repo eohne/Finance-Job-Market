@@ -96,7 +96,7 @@ This project supports two methods for AI-based information extraction from job p
 
 | Aspect              | **LLAMA 3.1 8B (Local, via Ollama)**                            | **Mistral-Medium (via API)**                   |
 |---------------------|----------------------------------------------------------------|------------------------------------------------|
-| **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **4.7 GB**, and it’s a 8B parameter model with a **128k context length**, which should run fine on a dedicated graphics card with 8GB of VRAM. | No special hardware required; inference done on external servers. |
+| **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **4.7 GB**, and it’s a 8B parameter model which should run fine on a dedicated graphics card with 8GB of VRAM. | No special hardware required; inference done on external servers. |
 | **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (should be sufficient). |
 | **Performance**      | Local inference may have **lower latency** but requires proper GPU resources to handle the model effectively. | API model is larger and may offer **better performance** at the cost of potential network latency. |
 
