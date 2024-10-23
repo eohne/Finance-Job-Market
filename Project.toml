@@ -1,0 +1,8 @@
+[deps]
+Gumbo = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+PromptingTools = "670122d1-24a8-4d70-bfce-740807c42192"
+Suppressor = "fd094767-a336-5f1f-9728-57cf17d0bbfb"
+TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
