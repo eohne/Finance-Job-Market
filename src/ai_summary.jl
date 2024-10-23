@@ -1,5 +1,3 @@
-using PromptingTools
-using Suppressor
 const PT = PromptingTools;
 
 function clean_ssrn_html(raw_html)
