@@ -21,6 +21,23 @@ Output CSV Files can be found in the ([Output Folder](https://github.com/eohne/F
 > **Note that the program checks for already downloaded and processed entries and will not reprocess those**
 
 
+> **⚠️ AI Reliability Disclaimer**
+>
+> This tool uses Large Language Models (LLMs) to extract information from job postings, including:
+> - Application deadlines
+> - Application links
+> - Required documents
+> - Job summaries
+>
+> While these AI models are powerful, they can make mistakes or misinterpret information. Therefore:
+> - All AI-extracted information should be treated as preliminary
+> - Users should always verify details directly from the original job posting
+> - Critical decisions (like application deadlines) should not be based solely on the AI-extracted data
+> - Consider the AI output as a helpful starting point rather than authoritative information
+>
+> To ensure accuracy, please cross-reference all important details with the original job posting sources (SSRN, AFA).
+
+
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
@@ -65,11 +82,7 @@ git clone https://github.com/your-repo/job-posting-scraper.git
 cd job-posting-scraper
 ```
 
-To install dependencies, simply run the main script:
-```julia
-include("main_script.jl")
-```
-
+All dependencies (except Ollama are automatically installed.)
 
 ## Usage
 The script prompts you with configuration options during runtime, where you can choose:
@@ -78,7 +91,7 @@ The script prompts you with configuration options during runtime, where you can 
 
 Run the main script to start scraping and processing:
 ```julia
-julia main_script.jl
+julia include(main.jl)
 ```
 
 ### Workflow
@@ -99,7 +112,7 @@ This project supports two methods for AI-based information extraction from job p
 | Aspect              | **LLAMA 3.1 8B (Local, via Ollama)**                            | **Mistral-Medium (via API)**                   |
 |---------------------|----------------------------------------------------------------|------------------------------------------------|
 | **Hardware Needs**   | Requires a **GPU** for optimal performance; check VRAM availability with Ollama. The model size is **4.7 GB**, and it’s a 8B parameter model which should run fine on a dedicated graphics card with 8GB of VRAM. | No special hardware required; inference done on external servers. |
-| **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (Extracting data for 280 applications used around 400,000 tokens). |
+| **Token Limits**     | N/A (No usage limits locally)                                  | Free API limits: **500,000 tokens per minute**, **1 billion tokens per month** (Extracting data for 280 applications used around 550,000 tokens). |
 | **Performance**      | Local inference may have **lower latency** but requires proper GPU resources to handle the model effectively. | API model is larger and may offer **better performance** at the cost of potential network latency. |
 
 For local use, ensure your GPU has sufficient VRAM for the model size. The free API provides ample token capacity for typical workloads.

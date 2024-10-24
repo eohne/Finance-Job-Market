@@ -1,6 +1,5 @@
-const PT = PromptingTools;
-
-tpl=PT.create_template("You are a JSON extractor that MUST:
+# using PromptingTools, Suppressor, ProgressMeter
+tpl= Main.PromptingTools.create_template("You are a JSON extractor that MUST:
 1. Keep ApplicationID inside the Apply object
 2. Convert ALL document names to standard formats
 3. Return only valid JSON
@@ -75,10 +74,10 @@ function extract_ai_summary(raw_html::String; max_retries=5,ollama=true)
         try
             # Generate AI response
             if ollama
-                msg = aigenerate(PT.OllamaSchema(), tpl; text=raw_html, model="llama3.1") #mistral-nemo:latest
+                msg = aigenerate(Main.PromptingTools.OllamaSchema(), tpl; text=raw_html, model="llama3.1") #mistral-nemo:latest
             else
                 sleep(1)
-                msg = aigenerate(PT.MistralOpenAISchema(),tpl,text=raw_html, model="mistral-medium", api_key=mistral_api_key)
+                msg = aigenerate(Main.PromptingTools.MistralOpenAISchema(),tpl,text=raw_html, model="mistral-medium", api_key=mistral_api_key)
             end
             # Parse JSON
             json = JSON3.read(msg.content)
