@@ -3,18 +3,70 @@ if isnothing(loc)
     global loc = @__FILE__
 end 
 cd(loc)
-include("install_dep.jl")
-include("ssrn_scraper.jl")
-include("afa_scraper.jl")
-# Import necessary packages
+function print_banner()
+    println("\n")
+    println("\033[1;36m  ███████╗██╗███╗   ██╗ █████╗ ███╗   ██╗ ██████╗███████╗")
+    println("  ██╔════╝██║████╗  ██║██╔══██╗████╗  ██║██╔════╝██╔════╝")
+    println("  █████╗  ██║██╔██╗ ██║███████║██╔██╗ ██║██║     █████╗  ")
+    println("  ██╔══╝  ██║██║╚██╗██║██╔══██║██║╚██╗██║██║     ██╔══╝  ")
+    println("  ██║     ██║██║ ╚████║██║  ██║██║ ╚████║╚██████╗███████╗")
+    println("  ╚═╝     ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝╚══════╝\033[0m")
+    println("\033[1;36m    ███╗ ██████╗ ██████╗    ███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗████████╗")
+    println("     ██║██╔═══██╗██╔══██╗   ████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝╚══██╔══╝")
+    println("     ██║██║   ██║██████╔╝   ██╔████╔██║███████║██████╔╝█████╔╝ █████╗     ██║   ")
+    println("     ██║██║   ██║██╔══██╗   ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ██╔══╝     ██║   ")
+    println("██   ██║╚██████╔╝██████╔╝   ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████╗   ██║   ")
+    println("╚█████╔╝ ╚═════╝ ╚═════╝    ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   \033[0m")
+    println("\033[1;36m                      ███████╗ ██████╗██████╗  █████╗ ██████╗ ███████╗██████╗")
+    println("                      ██╔════╝██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗")
+    println("                      ███████╗██║     ██████╔╝███████║██████╔╝█████╗  ██████╔╝")
+    println("                      ╚════██║██║     ██╔══██╗██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗")
+    println("                      ███████║╚██████╗██║  ██║██║  ██║██║     ███████╗██║  ██║")
+    println("                      ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝\033[0m")
+    println("\033[1;36m  ═════════════════════════════════════════════════════════════════════════\033[0m")
+    println("\033[1;36m                                  🎓 Version 1.0\033[0m")
+    println("\033[1;36m  ═════════════════════════════════════════════════════════════════════════\033[0m")
+    println()
+end
+print_banner()
+
+function install_dep(x::String...)
+    println("\n\033[1;36m📦 Checking Package Dependencies\033[0m")
+    println("═══════════════════════════")
+    inst_pack = [i.name for i in values(Pkg.dependencies())]
+    for pkg in x
+        if pkg ∈ inst_pack
+            println("\033[1;32m✓\033[0m $pkg")
+            nothing
+        else
+            println("\033[1;33m⟳\033[0m Installing: $pkg")
+            Pkg.add(pkg)
+            println("\033[1;32m✓\033[0m $pkg installed")
+        end
+    end
+    println("\033[1;32m✨ All packages ready!\033[0m")
+    println()
+    return nothing
+end;
+function print_warning(msg::String)
+    println("\033[1;33m⚠️  Warning: $msg\033[0m")
+end
 
 using Pkg
-install_dep("HTTP", "Gumbo", "DataFrames","ProgressMeter","CSV","Dates","JSON3","Suppressor");
+install_dep("HTTP", "Gumbo", "DataFrames","ProgressMeter","CSV","Dates","JSON3","Suppressor","PromptingTools");
+
+
+module FinJobScraper
+
 using HTTP, Gumbo, DataFrames,ProgressMeter, CSV, Dates , JSON3 , Suppressor
-install_dep("PromptingTools");
-@suppress_err begin  # Suppresses stdout
+@suppress begin
     using PromptingTools
 end
+export main
+
+
+include("ssrn_scraper.jl")
+include("afa_scraper.jl")
 include("ai_summary.jl");
 
 # Function to get user input with validation
@@ -90,11 +142,11 @@ function append_ai_results(new_ai_data::DataFrame, filepath::String)
         
         # Ensure joining columns are present in both DataFrames
         if occursin("ssrn", lowercase(filepath)) && !hasproperty(existing_ai, :Html)
-            @warn "Adding missing Html column to existing AI results"
+            print_warning("Missing Html column in SSRN AI results")
             existing_ai[!, :Html] = missing
         end
         if occursin("afa", lowercase(filepath)) && !hasproperty(existing_ai, :Description)
-            @warn "Adding missing Description column to existing AI results"
+            print_warning("Missing Description column in AFA AI results")
             existing_ai[!, :Description] = missing
         end
         
@@ -135,7 +187,7 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
         if !isempty(ssrn_output)
             if !isempty(existing_ssrn_ai)
                 if !hasproperty(existing_ssrn_ai, :Html)
-                    @warn "SSRN AI results missing Html column required for joining"
+                    print_warning("Missing HTML column in SSRN AI data - join operation may fail")
                 else
                     # Store AI deadline separately and remove from ssrn_ai
                     ai_deadline = existing_ssrn_ai[!, :Deadline]
@@ -163,7 +215,7 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
         if !isempty(afa_output)
             if !isempty(existing_afa_ai)
                 if !hasproperty(existing_afa_ai, :Description)
-                    @warn "AFA AI results missing Description column required for joining"
+                    print_warning("Missing Description column in AFA AI data - join operation may fail")
                 else
                     # First rename original Deadline to AFADeadline if it exists
                     if hasproperty(afa_output, :Deadline)
@@ -193,18 +245,18 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
     
     # Print AI processing status if AI was used
     if use_ai
-        println("\nAI Processing Status:")
-        println("-------------------")
+        println("\n\033[1;36m🤖 AI Processing Status\033[0m")
+        println("═══════════════════════")
         if new_ssrn_count > 0
-            println("✓ Processed $(new_ssrn_count) new SSRN job$(new_ssrn_count == 1 ? "" : "s") with AI")
+            println("\033[1;32m✓\033[0m Processed $(new_ssrn_count) SSRN job$(new_ssrn_count == 1 ? "" : "s")")
         end
         if new_afa_count > 0
-            println("✓ Processed $(new_afa_count) new AFA job$(new_afa_count == 1 ? "" : "s") with AI")
+            println("\033[1;32m✓\033[0m Processed $(new_afa_count) AFA job$(new_afa_count == 1 ? "" : "s")")
         end
         if new_ssrn_count == 0 && new_afa_count == 0
-            println("No new jobs to process with AI")
+            println("ℹ️  No new jobs to process")
         end
-        println("-------------------")
+        println("═══════════════════════")
     end
     
     # Combine both sources, handling empty DataFrames
@@ -228,12 +280,11 @@ function prepare_final_output(ssrn_df, afa_df, use_ai::Bool, ssrn_ai=nothing, af
     ssrn_jobs = nrow(filter(row -> row.source == "SSRN", combined))
     afa_jobs = nrow(filter(row -> row.source == "AFA", combined))
     
-    println("\nFinal Status:")
-    println("------------")
-    println("Total jobs in database: $total_jobs")
-    println("  - SSRN jobs: $ssrn_jobs")
-    println("  - AFA jobs:  $afa_jobs")
-    println("------------")
+    println("\n\033[1;36m📈 Database Summary\033[0m")
+    println("═══════════════")
+    println("📊 Total entries: \033[1m$total_jobs\033[0m")
+    println("   ├─ SSRN: \033[1m$ssrn_jobs\033[0m")
+    println("   └─ AFA:  \033[1m$afa_jobs\033[0m")
     
     return combined
 end
@@ -247,19 +298,19 @@ const afa_ai_path = "../Data/afa_ai.csv"
 
 use_ai = true; ollama = false; 
 function main()
-    # Get user preferences for AI usage
-    println("Job Posting Scraper Configuration")
-    println("=================================")
-    use_ai = get_user_input("Do you want to use AI for information extraction? (y/n): ", ["y", "yes", "n", "no"])
+
+    # Configuration section
+    println("\033[1;36m📋 Configuration\033[0m")
+    println("══════════════")
+    use_ai = get_user_input("\033[1m🤖 Use AI for information extraction?\033[0m (y/n): ", ["y", "yes", "n", "no"])
 
     # Only ask about Ollama if AI is requested
     ollama = false
     mistral_api_key = "api_key"
     if use_ai
-        ollama = get_user_input("Do you want to use Ollama (local) instead of Mistral API? (y/n): ", ["y", "yes", "n", "no"])
-
-        if !ollama
-            print("Please enter your Mistral API key (press Enter to skip): ")
+        ollama = get_user_input("\033[1m🖥️  Use local Ollama instead of Mistral API?\033[0m (y/n): ", ["y", "yes", "n", "no"])
+         if !ollama
+            print("\033[1m🔑 Enter Mistral API key\033[0m (press Enter to skip): ")
             input_key = readline()
             if !isempty(input_key)
                global mistral_api_key = input_key
@@ -267,32 +318,36 @@ function main()
         end
     end
 
-    # Debug existing files
-
+    # Data status section
+    println("\n\033[1;36m📊 Current Database Status\033[0m")
+    println("═══════════════════")
     if isfile(ssrn_path)
         existing_ssrn = CSV.read(ssrn_path, DataFrame)
-        println("Existing SSRN data: $(nrow(existing_ssrn)) rows")
+        println("\033[1m📚 SSRN Database:\033[0m $(nrow(existing_ssrn)) rows")
+        println("   └─ Columns: $(names(existing_ssrn))")
     else
-        println("No existing SSRN file found")
+        println("\033[1m📚 SSRN Database:\033[0m Not found")
     end
 
     if isfile(afa_path)
         existing_afa = CSV.read(afa_path, DataFrame)
-        println("Existing AFA data: $(nrow(existing_afa)) rows")
+        println("\033[1m🏛️  AFA Database:\033[0m  $(nrow(existing_afa)) rows")
+        println("   └─ Columns: $(names(existing_afa))")
     else
-        println("No existing AFA file found")
+        println("\033[1m🏛️  AFA Database:\033[0m  Not found")
     end
 
-    # Retrieve and process SSRN jobs
-    # First, modify the data loading section:
-    println("\nRetrieving SSRN job postings...")
+    # Scraping section
+    println("\n\033[1;36m🔄 Updating Databases\033[0m")
+    println("══════════════════")
+    println("\033[1m📥 Retrieving SSRN postings...\033[0m")
     new_ssrn = ssrn_jobs()
-    println("New SSRN scrape: $(nrow(new_ssrn)) rows")
+    println("  └─ Found $(nrow(new_ssrn)) new entries")
     
     # Initialize ssrn_table with existing data
     if isfile(ssrn_path)
         ssrn_table = CSV.read(ssrn_path, DataFrame)
-        println("Loaded existing SSRN data: $(nrow(ssrn_table)) rows")
+        println("   └─ Loaded \033[1m$(nrow(ssrn_table))\033[0m existing entries")
         ssrn_table[!, :old] .= 1
     else
         ssrn_table = DataFrame()
@@ -300,6 +355,7 @@ function main()
     
     # Process and append new SSRN data if any exists
     if !isempty(new_ssrn)
+        println("   └─ Processing new entries...")
         new_ssrn.Html = clean_ssrn_html.(new_ssrn.Html)
         new_ssrn.Html = get_text_only.(new_ssrn.Html)
         new_ssrn[!, :timestamp] = fill(Dates.now(), nrow(new_ssrn))
@@ -318,14 +374,14 @@ function main()
     end
     
     # Retrieve and process AFA jobs
-    println("\nRetrieving AFA job postings...")
+    println("\n\033[1m📥 Retrieving AFA postings...\033[0m")
     new_afa = afa_jobs()
-    println("New AFA scrape: $(nrow(new_afa)) rows")
+    println("   └─ Found $(nrow(new_afa)) new entries")
     
     # Initialize afa_table with existing data
     if isfile(afa_path)
         afa_table = CSV.read(afa_path, DataFrame)
-        println("Loaded existing AFA data: $(nrow(afa_table)) rows")
+        println("   └─ Loaded \033[1m$(nrow(afa_table))\033[0m existing entries")
         afa_table[!, :old] .= 1
     else
         afa_table = DataFrame()
@@ -333,6 +389,7 @@ function main()
     
     # Process and append new AFA data if any exists
     if !isempty(new_afa)
+        println("   └─ Processing new entries...")
         # Add new columns as vectors rather than trying to assign directly
         new_afa[!, :timestamp] = fill(Dates.now(), nrow(new_afa))
         new_afa[!, :old] = zeros(Int, nrow(new_afa))
@@ -351,13 +408,15 @@ function main()
     
     # Process with AI if requested and possible
     if use_ai
+        println("\n\033[1;36m🤖 AI Processing\033[0m")
+        println("═════════════")
         if ollama
-            println("\nUsing Ollama for AI processing...")
+            println("📡 Using local Ollama")
         elseif isequal(mistral_api_key, "api_key")
-            @warn "Ollama set to false and mistral_api_key not set! Will skip AI extraction."
+            println("\033[1;31m⚠️  Warning: No API key provided - skipping AI processing\033[0m")
             use_ai = false
         else
-            println("\nUsing Mistral API for AI processing...")
+            println("☁️  Using Mistral API")
         end
         
         # Initialize AI results
@@ -367,7 +426,7 @@ function main()
         # Process new unprocessed SSRN entries
         new_unprocessed_ssrn = filter(row -> row.old == 0 && row.used_ai == 0, ssrn_table)
         if !isempty(new_unprocessed_ssrn)
-            println("Processing $(nrow(new_unprocessed_ssrn)) new SSRN entries with AI...")
+            println("   └─ Processing \033[1m$(nrow(new_unprocessed_ssrn))\033[0m SSRN entries with AI...")
             ssrn_ai_new = process_html_batch(string.(new_unprocessed_ssrn.Html); ollama=ollama)
             ssrn_ai_new[!, :Html] = new_unprocessed_ssrn.Html
             
@@ -392,7 +451,7 @@ function main()
         # Process new unprocessed AFA entries
         new_unprocessed_afa = filter(row -> row.old == 0 && row.used_ai == 0, afa_table)
         if !isempty(new_unprocessed_afa)
-            println("Processing $(nrow(new_unprocessed_afa)) new AFA entries with AI...")
+            println("   └─ Processing \033[1m$(nrow(new_unprocessed_afa))\033[0m AFA entries with AI...")
             afa_ai_new = process_html_batch(string.(new_unprocessed_afa.Description); ollama=ollama)
             afa_ai_new[!, :Description] = new_unprocessed_afa.Description
             
@@ -417,7 +476,8 @@ function main()
     
   
     # Prepare and save final output using all AI results
-    println("\nPreparing final output...")
+    println("\n\033[1;36m📊 Final Status\033[0m")
+    println("════════════")
     final_output = prepare_final_output(
         ssrn_table, 
         afa_table,
@@ -451,20 +511,36 @@ function main()
     if !isempty(final_output) && !isempty(available_columns)
         select!(final_output, available_columns)
     else
-        println("\nWarning: Either final_output is empty or no available columns found")
-        println("final_output empty? $(isempty(final_output))")
-        println("available_columns empty? $(isempty(available_columns))")
+        println("\n\033[1;31m⚠️  Warning: Data validation failed\033[0m")
+        println("   └─ Empty output: $(isempty(final_output))")
+        println("   └─ No columns: $(isempty(available_columns))")
     end
 
     # Save final output
     if !isempty(final_output)
         file_path_out = replace(output_path,"Jobs.csv"=>replace("$(Dates.today())_Jobs.csv", "-"=>""))
         CSV.write(file_path_out, final_output)
-        println("\nOutput saved with $(nrow(final_output)) rows to: $file_path_out")
+        println("\n\033[1;32m✅ Successfully saved $(nrow(final_output)) entries\033[0m")
+        println("   📁 Output: $file_path_out")
     else
-        println("\nWarning: No data to save!")
+        println("\n\033[1;31m❌ Warning: No data to save!\033[0m")
     end
 end
+end # Module
 
-
-main()
+using .FinJobScraper
+try
+    main()
+    println("\n\033[1;33m Press Enter to exit...\033[0m")
+    readline()
+catch e
+    println("\n\033[1;31m❌ An error occurred:\033[0m")
+    println(e)
+    println("\n\033[1;31mStacktrace:\033[0m")
+    for (exc, bt) in Base.catch_stack()
+        showerror(stdout, exc, bt)
+        println()
+    end
+    println("\n\033[1;33m Press Enter to exit...\033[0m")
+    readline()
+end

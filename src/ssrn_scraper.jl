@@ -78,8 +78,12 @@ function ssrn_jobs()
     # Do this only for companies not yet in the list
      # Setup progress meter
      
-    p = Progress(nrow(res); desc="Downloading from SSRN:   ", 
-    showspeed=true, barglyphs=BarGlyphs("[=> ]"))
+    p = Progress(nrow(res);  desc="\033[1;36m📥 Downloading SSRN data    \033[0m", 
+    barglyphs=BarGlyphs('|','█', ['▁' ,'▂' ,'▃' ,'▄' ,'▅' ,'▆', '▇'],' ','|',),
+    # output=stderr,
+    barlen=40,
+    color=:cyan,
+    showspeed=true)
     for i in 1:nrow(res)
             ap_text[i], ap_dates[i], ap_raw_html[i] = try
             get_application_procedure(res.Link[i])

@@ -1,5 +1,4 @@
-# using PromptingTools, Suppressor, ProgressMeter
-tpl= Main.PromptingTools.create_template("You are a JSON extractor that MUST:
+tpl= PromptingTools.create_template("You are a JSON extractor that MUST:
 1. Keep ApplicationID inside the Apply object
 2. Convert ALL document names to standard formats
 3. Return only valid JSON
@@ -74,10 +73,10 @@ function extract_ai_summary(raw_html::String; max_retries=5,ollama=true)
         try
             # Generate AI response
             if ollama
-                msg = aigenerate(Main.PromptingTools.OllamaSchema(), tpl; text=raw_html, model="llama3.1") #mistral-nemo:latest
+                msg = aigenerate(PromptingTools.OllamaSchema(), tpl; text=raw_html, model="llama3.1") #mistral-nemo:latest
             else
                 sleep(1)
-                msg = aigenerate(Main.PromptingTools.MistralOpenAISchema(),tpl,text=raw_html, model="mistral-medium", api_key=mistral_api_key)
+                msg = aigenerate(PromptingTools.MistralOpenAISchema(),tpl,text=raw_html, model="mistral-medium", api_key=mistral_api_key)
             end
             # Parse JSON
             json = JSON3.read(msg.content)
@@ -113,8 +112,12 @@ function process_html_batch(raw_htmls::Vector{<:AbstractString}; max_retries=5, 
     results = DataFrame()
     
     # Setup progress meter
-    p = Progress(length(raw_htmls); desc="Processing job postings: ", 
-                showspeed=true, barglyphs=BarGlyphs("[=> ]"))
+    p = Progress(length(raw_htmls); desc="\033[1;36m🤖 Processing entries      \033[0m", 
+    barglyphs=BarGlyphs('|','█', ['▁' ,'▂' ,'▃' ,'▄' ,'▅' ,'▆', '▇'],' ','|',),
+    barlen=40,
+    # output=stderr,
+    color=:cyan,
+    showspeed=true)
     
     # Process each HTML string
     @suppress_out begin  # Suppresses stdout
