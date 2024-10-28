@@ -60,7 +60,8 @@ function ical(file_name,df::DataFrame)
             h=0
         end
         old_deadline=r.Deadline
-        desc = """Title:\t$(r.Title)\n\t\\nSource:\t$(r.Source)\n\t\\nLink:\t$(r.SSRNLink)"""
+        # desc = """Title:\t$(r.Title)\n\t\\nSource:\t$(r.Source)\n\t\\nLink:\t$(r.SSRNLink)"""
+        desc = """Title:\t$(r.Title)\n\t\\nSource:\t$(r.Source)\n\t\\nLink:\t$(r.SSRNLink)\n\t\\nApp:\t$(r.App_link)\n\t\\nEmail:\t$(r.App_email)\n\t\\nDocs:\t$(r.Required_Docs)\n\t\\nOther:\t$(r.Other_Docs)\n\t\\nAI Summary:\t$(r.Summary)"""
         res = create_ical_file.(DateTime(year(r.Deadline),month(r.Deadline),day(r.Deadline),09+h,m,00), 
                                                             DateTime(year(r.Deadline),month(r.Deadline),day(r.Deadline),09+h,m+10,00),r.School,desc)
         events = join([events,res],"")
@@ -78,11 +79,12 @@ $(events)END:VCALENDAR
 end
 
 
-jobs = CSV.File("All Jobs.csv") |> DataFrame;
+jobs = CSV.File("ical.csv") |> DataFrame;
 rename!(jobs, names(jobs) .=> replace.(names(jobs), r"( ){1,}"=>"") );
-subset!(jobs, :ShortList => (x-> isequal.(x,1)));
-select!(jobs, :Deadline,:Source,:School,:SSRNLink,:Title);
-dropmissing!(jobs);
-
-ical("all_events2.ics",jobs)
+subset!(jobs, :Deadline => x->(.!ismissing.(x)))
+select!(jobs, :Deadline,:Source,:School,:SSRNLink,:Title,:App_link,:App_email,:Required_Docs,:Other_Docs,:Summary);
+any_to_string(x::Any) = string(x);
+transform!(jobs, [:Source,:School,:SSRNLink,:Title,:App_link,:App_email,:Required_Docs,:Other_Docs,:Summary] .=> ByRow(any_to_string),renamecols=false )
+sort!(jobs, :Deadline)
+ical("all_events.ics",jobs)
 # max_counter was 50
