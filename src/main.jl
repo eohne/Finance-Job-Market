@@ -26,9 +26,8 @@ print_banner()
 function install_dep(x::String...)
     println("\n\033[1;36m📦 Checking Package Dependencies\033[0m")
     println("═══════════════════════════")
-    inst_pack = [i.name for i in values(Pkg.dependencies())]
     for pkg in x
-        if pkg ∈ inst_pack
+        if !isnothing(Base.find_package(pkg))
             println("\033[1;32m✓\033[0m $pkg")
             nothing
         else
@@ -60,7 +59,6 @@ export main, clear_keep_banner
 
 function clear_keep_banner()
     # Clear screen
-    sleep(1)
     if Sys.iswindows()
         run(`cmd /c cls`)
     else
