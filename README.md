@@ -99,6 +99,11 @@ The following Julia packages are required:
 These packages are automatically installed when the program is executed for the first time.
 
 ## Installation
+
+**The Julia Programming language needs to be installed on the system (Tested on version 1.10).**
+
+It can be downloaded [here](https://julialang.org/downloads/). 
+
 Clone the repository and navigate to the project directory:
 ```bash
 git clone https://github.com/your-repo/job-posting-scraper.git
