@@ -25,8 +25,7 @@
 ```
 This package scrapes academic job postings from various platforms like SSRN and AFA. Additionally, it provides the option to use AI tools to extract structured information from job postings for easier analysis.
 
-<!-- Output CSV Files can be found in the ([Output](https://raw.githubusercontent.com/eohne/Finance-Job-Market/main/Output/20241104_Jobs.csv)) - **Last Update Nov 4, 2024** -->
-Output CSV Files can be found in the <a href="https://raw.githubusercontent.com/eohne/Finance-Job-Market/main/Output/20241104_Jobs.csv" title="Download" download>Download Latest</a> - **Last Update Nov 4, 2024**
+Output CSV Files can be found in the ([Output](https://github.com/eohne/Finance-Job-Market/blob/main/Output/20241104_Jobs.csv)) - **Last Update Nov 4, 2024**
 
 > **⚠️ Disclaimer**
 >
